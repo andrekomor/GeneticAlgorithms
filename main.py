@@ -4,12 +4,14 @@ import matplotlib.pyplot as plt
 
 class KnapsackProblem:
     def __init__(self, amount_of_articles, max_weight, weight_range=(1, 11), value_range=(1, 11), rng_seed=None):
+        """Generating objects, weights and values for each of them"""
         self.random_number_generator = np.random.default_rng(rng_seed)
         self.amount_of_articles = amount_of_articles
         self.max_weight = max_weight
         self.weights_of_articles = self.random_number_generator.integers(*weight_range, amount_of_articles)
         self.values_of_articles = self.random_number_generator.integers(*value_range, amount_of_articles)
 
+    # generating random individual with 1 and 0 code for all articles
     def get_random_individual(self):
         return self.random_number_generator.integers(0, 2, self.amount_of_articles)
 
@@ -30,6 +32,8 @@ class KnapsackProblem:
         return [
             population[order_of_competing[i]] if scores[order_of_competing[i]] >= scores[order_of_competing[-i]] else
             population[order_of_competing[-i]] for i in range(len(population) // 2)]
+
+    # TODO add other choosing methods
 
     # Crossover at rate 50% and 25%
     def get_children_from_two_parents(self, mom, dad, only_two=False):
@@ -57,6 +61,18 @@ class KnapsackProblem:
             return [son1, daughter1]
         return [son1, son2, daughter1, daughter2]
 
+    def genotype_mutation_of_population(self, population, mutate_probability=0.001):
+        genes = len(population) * len(population[0])
+        for i in range(int(genes * mutate_probability)):
+            random_selector = self.random_number_generator.integers(len(population))
+            random_gene = self.random_number_generator.integers(len(population[random_selector]))
+            if population[random_selector][random_gene] == 0:
+                population[random_selector][random_gene] = 1
+            else:
+                population[random_selector][random_gene] = 0
+
+        return population
+
     # Makes whole population of children from whole population of parents
     def get_all_children_from_all_parents(self, parents):
         order_of_crossing = np.arange(len(parents))
@@ -72,7 +88,6 @@ class KnapsackProblem:
                 children.extend(self.get_children_from_two_parents(parents[order_of_crossing[i]],
                                                                    parents[order_of_crossing[i + 1]]))
         return children
-
 
     # Solves the problem
     def solve_problem(self, size_of_population, number_of_epochs, show_learning_curve=False):
@@ -93,6 +108,7 @@ class KnapsackProblem:
             print('Epoch {}: '.format(i), np.mean(current_scores))
             parents = self.get_parents_from_population_tournament_method(population)
             population = self.get_all_children_from_all_parents(parents)
+            population = self.genotype_mutation_of_population(population, mutate_probability=0.001)
 
         if show_learning_curve:
             current_scores = self.score_the_population(population)
