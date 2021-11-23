@@ -73,6 +73,17 @@ class KnapsackProblem:
 
         return population
 
+    def genotype_mutation(self, population, mutate_probability=0.001):
+
+        for individual in population:
+            for gene in range(len(individual)):
+                if self.random_number_generator.random() < mutate_probability:
+                    if individual[gene] == 0:
+                        individual[gene] = 1
+                    else:
+                        individual[gene] = 0
+        return population
+
     # Makes whole population of children from whole population of parents
     def get_all_children_from_all_parents(self, parents):
         order_of_crossing = np.arange(len(parents))
@@ -108,7 +119,7 @@ class KnapsackProblem:
             print('Epoch {}: '.format(i), np.mean(current_scores))
             parents = self.get_parents_from_population_tournament_method(population)
             population = self.get_all_children_from_all_parents(parents)
-            population = self.genotype_mutation_of_population(population, mutate_probability=0.001)
+            population = self.genotype_mutation_of_population(population, mutate_probability=0.0001)
 
         if show_learning_curve:
             current_scores = self.score_the_population(population)
