@@ -33,25 +33,23 @@ class KnapsackProblem:
             population[order_of_competing[i]] if scores[order_of_competing[i]] >= scores[order_of_competing[-i]] else
             population[order_of_competing[-i]] for i in range(len(population) // 2)]
 
-    # TODO add other choosing methods
-
     # Crossover at rate 50% and 25%
-    def get_children_from_two_parents(self, mom, dad, only_two=False):
+    def get_children_from_two_parents(self, mom, dad, only_two=False, crossover_rate_1=0.5, crossover_rate_2=0.25):
         son1 = []
         son2 = []
         daughter1 = []
         daughter2 = []
         for i in range(len(mom)):
             rnd_number = self.random_number_generator.random()
-            # Crossover rate 50%
-            if rnd_number > 0.5:
+            # Crossover rate 1 (default 50%)
+            if rnd_number < crossover_rate_1:
                 son1.append(mom[i])
                 daughter1.append(dad[i])
             else:
                 son1.append(dad[i])
                 daughter1.append(mom[i])
-            # Crossover rate 25%
-            if rnd_number > 0.75:
+            # Crossover rate 2 (default 25%)
+            if rnd_number < crossover_rate_2:
                 son2.append(mom[i])
                 daughter2.append(dad[i])
             else:
@@ -139,7 +137,7 @@ class KnapsackProblem:
 
 
 if __name__ == '__main__':
-    ks = KnapsackProblem(amount_of_articles=100, max_weight=250)
+    ks = KnapsackProblem(amount_of_articles=500, max_weight=1500)
 
-    ks.solve_problem(size_of_population=150, number_of_epochs=200, show_learning_curve=True)
+    ks.solve_problem(size_of_population=150, number_of_epochs=220, show_learning_curve=True)
     plt.show()
