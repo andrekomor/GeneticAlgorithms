@@ -147,10 +147,13 @@ class KnapsackProblem:
             plt.plot(np.arange(len(best_scores)), worst_scores, c='r')
             plt.plot(np.arange(len(best_scores)), mean_scores, c='b')
             plt.plot(np.arange(len(bests_total_weight)), bests_total_weight, c='y')
-            plt.legend(["Best scoring individual", "Worst scoring individual", "Mean score of population"])
+            plt.legend(["Best scoring individual", "Worst scoring individual", "Mean score of population",
+                        "Best scoring individual weight"])
 
         best_genotype = population[np.argmax(self.score_the_population(population))]
         print('Best genotype: ', best_genotype)
+        print(f'Max weight: {self.max_weight}, best scoring individual weight:', bests_total_weight)
+
         return best_genotype
 
 
@@ -167,5 +170,5 @@ def load_data(path):
 if __name__ == '__main__':
     ks = KnapsackProblem(amount_of_articles=500, max_weight=1500, problem_number=7, load_problem=True)
 
-    ks.solve_problem(size_of_population=10, number_of_epochs=50, show_learning_curve=True, mutate_probability=0.0001)
+    ks.solve_problem(size_of_population=30, number_of_epochs=80, show_learning_curve=True, mutate_probability=0.0001)
     plt.show()
