@@ -14,10 +14,12 @@ class KnapsackProblem:
             self.max_weight = max_weight
             self.weights_of_articles = self.random_number_generator.integers(*weight_range, amount_of_articles)
             self.values_of_articles = self.random_number_generator.integers(*value_range, amount_of_articles)
+            self.optimal_genotype = None
 
     def load_problem(self, problem_number):
         self.weights_of_articles = load_data(f"./datasets/p0{str(problem_number)}_w.txt")
         self.values_of_articles = load_data(f"./datasets/p0{str(problem_number)}_p.txt")
+        self.optimal_genotype = load_data(f"./datasets/p0{str(problem_number)}_s.txt")
         self.amount_of_articles = len(self.values_of_articles)
         self.max_weight = load_data(f"./datasets/p0{str(problem_number)}_c.txt")[0]
 
@@ -34,8 +36,14 @@ class KnapsackProblem:
             np.multiply(population[i], self.weights_of_articles)) <= self.max_weight else 0 for i in
                 range(len(population))]
 
-    def weight_the_population(self, best_individual):
+    def score_individual(self, individual):
+        return np.dot(individual, self.values_of_articles)
+
+    def weight_individual(self, best_individual):
         return sum(best_individual[i] * self.weights_of_articles[i] for i in range(len(best_individual)))
+
+    def weight_the_population(self, population):
+        return np.mean([np.dot(population[i], self.weights_of_articles) for i in range(len(population))])
 
     # Choosing top 50% best individuals using tournament method
     def get_parents_from_population_tournament_method(self, population):
@@ -122,12 +130,13 @@ class KnapsackProblem:
 
         for i in range(number_of_epochs):
             current_scores = self.score_the_population(population)
-            best_total_weight = self.weight_the_population(population[np.argmax(current_scores)])
+            #best_total_weight = self.weight_individual(population[np.argmax(current_scores)])
+            mean_weight = self.weight_the_population(population)
             if show_learning_curve:
                 best_scores.append(np.max(current_scores))
                 worst_scores.append(np.min(current_scores))
                 mean_scores.append(np.mean(current_scores))
-                bests_total_weight.append(best_total_weight)
+                bests_total_weight.append(mean_weight)
 
             print('Epoch {}: '.format(i), np.mean(current_scores))
             parents = self.get_parents_from_population_tournament_method(population)
@@ -136,7 +145,8 @@ class KnapsackProblem:
 
         if show_learning_curve:
             current_scores = self.score_the_population(population)
-            best_total_weight = self.weight_the_population(population[np.argmax(current_scores)])
+            #best_total_weight = self.weight_individual(population[np.argmax(current_scores)])
+            best_total_weight = self.weight_the_population(population)
             best_scores.append(np.max(current_scores))
             worst_scores.append(np.min(current_scores))
             mean_scores.append(np.mean(current_scores))
@@ -151,8 +161,13 @@ class KnapsackProblem:
                         "Best scoring individual weight"])
 
         best_genotype = population[np.argmax(self.score_the_population(population))]
+        best_genotype_score = np.max(self.score_the_population(population))
+
         print('Best genotype: ', best_genotype)
-        print(f'Max weight: {self.max_weight}, best scoring individual weight:', bests_total_weight)
+        print('Benchmark genotype', self.optimal_genotype)
+        print('Max score: ', best_genotype_score)
+        print('Benchmark score: ', self.score_individual(self.optimal_genotype))
+        print(f'Max weight: {self.max_weight}, Avg weight of population:', bests_total_weight[::5])
 
         return best_genotype
 
@@ -162,7 +177,7 @@ def load_data(path):
         x = []
         for line in input_file.readlines():
             line = line.strip().split()
-            x.append(float(line[0]))
+            x.append(int(line[0]))
 
     return x
 
