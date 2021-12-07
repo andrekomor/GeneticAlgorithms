@@ -3,12 +3,14 @@ import matplotlib.pyplot as plt
 
 
 class KnapsackProblem:
-    def __init__(self, amount_of_articles, max_weight, problem_number, weight_range=(1, 11), value_range=(1, 11), rng_seed=None, load_problem=False):
+    def __init__(self, amount_of_articles, max_weight, problem_number=None, weight_range=(1, 11), value_range=(1, 11),
+                 rng_seed=None):
         """Generating objects, weights and values for each of them"""
         self.random_number_generator = np.random.default_rng(rng_seed)
+        self.problem_number = problem_number
 
-        if load_problem:
-            self.load_problem(problem_number)
+        if problem_number:
+            self.load_problem(self.problem_number)
         else:
             self.amount_of_articles = amount_of_articles
             self.max_weight = max_weight
@@ -43,7 +45,7 @@ class KnapsackProblem:
         return sum(best_individual[i] * self.weights_of_articles[i] for i in range(len(best_individual)))
 
     def weight_the_population(self, population):
-        return np.mean([np.dot(population[i], self.weights_of_articles) for i in range(len(population))])
+        return np.mean([np.dot(gene, self.weights_of_articles) for gene in population])
 
     # Choosing top 50% best individuals using tournament method
     def get_parents_from_population_tournament_method(self, population):
@@ -120,23 +122,25 @@ class KnapsackProblem:
         return children
 
     # Solves the problem
-    def solve_problem(self, size_of_population, number_of_epochs, show_learning_curve=False, mutate_probability = 0.0001):
+    def solve_problem(self, size_of_population, number_of_epochs, show_learning_curve=False, mutate_probability=0.0001):
         population = self.get_random_population(size_of_population)
         if show_learning_curve:
             best_scores = []
             worst_scores = []
             mean_scores = []
+            mean_weights = []
             bests_total_weight = []
 
         for i in range(number_of_epochs):
             current_scores = self.score_the_population(population)
-            #best_total_weight = self.weight_individual(population[np.argmax(current_scores)])
+            best_total_weight = self.weight_individual(population[np.argmax(current_scores)])
             mean_weight = self.weight_the_population(population)
             if show_learning_curve:
                 best_scores.append(np.max(current_scores))
                 worst_scores.append(np.min(current_scores))
                 mean_scores.append(np.mean(current_scores))
-                bests_total_weight.append(mean_weight)
+                bests_total_weight.append(best_total_weight)
+                mean_weights.append(np.mean(mean_weight))
 
             print('Epoch {}: '.format(i), np.mean(current_scores))
             parents = self.get_parents_from_population_tournament_method(population)
@@ -145,7 +149,7 @@ class KnapsackProblem:
 
         if show_learning_curve:
             current_scores = self.score_the_population(population)
-            #best_total_weight = self.weight_individual(population[np.argmax(current_scores)])
+            # best_total_weight = self.weight_individual(population[np.argmax(current_scores)])
             best_total_weight = self.weight_the_population(population)
             best_scores.append(np.max(current_scores))
             worst_scores.append(np.min(current_scores))
@@ -156,18 +160,24 @@ class KnapsackProblem:
             plt.plot(np.arange(len(best_scores)), best_scores, c='g')
             plt.plot(np.arange(len(best_scores)), worst_scores, c='r')
             plt.plot(np.arange(len(best_scores)), mean_scores, c='b')
-            plt.plot(np.arange(len(bests_total_weight)), bests_total_weight, c='y')
-            plt.legend(["Best scoring individual", "Worst scoring individual", "Mean score of population",
-                        "Best scoring individual weight"])
+            plt.plot(np.arange(len(bests_total_weight)), bests_total_weight, '--', c='g')
+            plt.plot(np.arange(len(mean_weights)), mean_weights, '--', c='b')
+            plt.plot(np.arange(len(bests_total_weight)), np.ones(len(bests_total_weight)) * self.max_weight, '--',
+                     c='y')
+            plt.legend(["Best scoring individual (value)", "Worst scoring individual (value)",
+                        "Mean score of population (value)",
+                        "Best scoring individual weight", "Mean weight of population", "Max weight", ""])
 
         best_genotype = population[np.argmax(self.score_the_population(population))]
         best_genotype_score = np.max(self.score_the_population(population))
 
         print('Best genotype: ', best_genotype)
-        print('Benchmark genotype', self.optimal_genotype)
+        if self.problem_number:
+            print('Benchmark genotype', self.optimal_genotype)
         print('Max score: ', best_genotype_score)
-        print('Benchmark score: ', self.score_individual(self.optimal_genotype))
-        print(f'Max weight: {self.max_weight}, Avg weight of population:', bests_total_weight[::5])
+        if self.problem_number:
+            print('Benchmark score: ', self.score_individual(self.optimal_genotype))
+        print(f'Max weight: {self.max_weight}')
 
         return best_genotype
 
@@ -183,7 +193,7 @@ def load_data(path):
 
 
 if __name__ == '__main__':
-    ks = KnapsackProblem(amount_of_articles=500, max_weight=1500, problem_number=7, load_problem=True)
+    ks = KnapsackProblem(amount_of_articles=500, max_weight=1500)
 
-    ks.solve_problem(size_of_population=30, number_of_epochs=80, show_learning_curve=True, mutate_probability=0.0001)
+    ks.solve_problem(size_of_population=50, number_of_epochs=250, show_learning_curve=True, mutate_probability=0.0001)
     plt.show()
